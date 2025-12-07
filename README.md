@@ -1,2 +1,2 @@
-# hclos
-Package manager for Lilith Linux
+# cpsb
+Package manager for Shary OS
