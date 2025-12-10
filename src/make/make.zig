@@ -15,9 +15,9 @@ pub fn make(allocator: std.mem.Allocator, file: []const u8) !void {
     //     },
     // };
 
-    if (!exists("/etc/hburg/build.sh")) {
-        _ = try makeDirAbsoluteRecursive(allocator, "/etc/hburg/");
-        var file_sh = try std.fs.createFileAbsolute("/etc/hburg/build.sh", .{});
+    if (!exists("/etc/cpsb/build.sh")) {
+        _ = try makeDirAbsoluteRecursive(allocator, "/etc/cpsb/");
+        var file_sh = try std.fs.createFileAbsolute("/etc/cpsb/build.sh", .{});
         defer file_sh.close();
 
         try file_sh.writeAll(build_script);
@@ -54,7 +54,7 @@ fn install_dependencies(allocator: std.mem.Allocator, packages: *const [64][32]u
     defer allocator.free(packages_joined);
 
     var child = std.process.Child.init(&.{
-        "/usr/bin/hclos",
+        "/usr/bin/cpsi",
         "install",
         packages_joined,
     }, allocator);
@@ -77,7 +77,7 @@ fn build_package(allocator: std.mem.Allocator, hb_file: []const u8, package_info
     const name = std.mem.sliceTo(&package_info.name, 0);
     const version = std.mem.sliceTo(&package_info.version, 0);
 
-    const source_dir = "/var/lib/hburg/build/";
+    const source_dir = "/var/lib/cpsb/build/";
 
     const source_file = try std.fmt.allocPrint(allocator, "{s}/src-{s}-{s}", .{ source_dir, name, version });
     defer allocator.free(source_file);
@@ -88,16 +88,16 @@ fn build_package(allocator: std.mem.Allocator, hb_file: []const u8, package_info
 
     std.debug.print("\r\x1b[2Kbuilding: {s}\n", .{package_info.name});
 
-    const package_dir = try std.fmt.allocPrint(allocator, "/var/lib/hburg/build/packaging-{s}", .{name});
+    const package_dir = try std.fmt.allocPrint(allocator, "/var/lib/cpsb/build/packaging-{s}", .{name});
     defer allocator.free(package_dir);
 
-    const build_dir = try std.fmt.allocPrint(allocator, "/var/lib/hburg/build/build-{s}", .{name});
+    const build_dir = try std.fmt.allocPrint(allocator, "/var/lib/cpsb/build/build-{s}", .{name});
     defer allocator.free(build_dir);
 
     const build_file = try std.fs.realpathAlloc(allocator, hb_file);
     defer allocator.free(build_file);
 
-    const temp_dir = try std.fmt.allocPrint(allocator, "/var/lib/hburg/build/temp-{s}", .{name});
+    const temp_dir = try std.fmt.allocPrint(allocator, "/var/lib/cpsb/build/temp-{s}", .{name});
     defer allocator.free(temp_dir);
 
     _ = try makeDirAbsoluteRecursive(allocator, package_dir);
@@ -116,7 +116,7 @@ fn build_package(allocator: std.mem.Allocator, hb_file: []const u8, package_info
         "/usr/bin/env",
         "sh",
         "-c",
-        ". /etc/hburg/build.sh; build_package",
+        ". /etc/cpsb/build.sh; build_package",
     }, allocator);
 
     child.env_map = &env_map;
@@ -138,21 +138,21 @@ fn packaging(allocator: std.mem.Allocator, file: []const u8, package_info: packa
     const name = std.mem.sliceTo(&package_info.name, 0);
     const version = std.mem.sliceTo(&package_info.version, 0);
 
-    const source_dir = "/var/lib/hburg/build/";
+    const source_dir = "/var/lib/cpsb/build/";
 
     const source_file = try std.fmt.allocPrint(allocator, "{s}/src-{s}-{s}", .{ source_dir, name, version });
     defer allocator.free(source_file);
     defer deleteTreeAbsolute(source_file);
 
-    const package_dir = try std.fmt.allocPrint(allocator, "/var/lib/hburg/build/packaging-{s}/", .{name});
+    const package_dir = try std.fmt.allocPrint(allocator, "/var/lib/cpsb/build/packaging-{s}/", .{name});
     defer allocator.free(package_dir);
     defer deleteTreeAbsolute(package_dir);
 
-    const build_dir = try std.fmt.allocPrint(allocator, "/var/lib/hburg/build/build-{s}", .{name});
+    const build_dir = try std.fmt.allocPrint(allocator, "/var/lib/cpsb/build/build-{s}", .{name});
     defer allocator.free(build_dir);
     defer deleteTreeAbsolute(build_dir);
 
-    const temp_dir = try std.fmt.allocPrint(allocator, "/var/lib/hburg/build/temp-{s}", .{name});
+    const temp_dir = try std.fmt.allocPrint(allocator, "/var/lib/cpsb/build/temp-{s}", .{name});
     defer allocator.free(temp_dir);
     defer deleteTreeAbsolute(temp_dir);
 
@@ -173,7 +173,7 @@ fn packaging(allocator: std.mem.Allocator, file: []const u8, package_info: packa
             "/usr/bin/env",
             "sh",
             "-c",
-            ". /etc/hburg/build.sh; packaging_package",
+            ". /etc/cpsb/build.sh; packaging_package",
         }, allocator);
 
         child.env_map = &env_map;

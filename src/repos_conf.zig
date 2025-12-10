@@ -15,7 +15,7 @@ pub fn parse_repos(allocator: std.mem.Allocator) !toml.Parsed(ReposConf) {
     var parser = toml.Parser(ReposConf).init(allocator);
     defer parser.deinit();
 
-    const result = try parser.parseFile(constants.hclos_repos_conf);
+    const result = try parser.parseFile(constants.cpsi_repos_conf);
 
     return result;
 }

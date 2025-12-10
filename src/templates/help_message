@@ -1,4 +1,4 @@
-usage: hburg <command> [options] [args]
+usage: cpsb <command> [options] [args]
 
 commands:
   make <FILE>   build the specified package using its build.sh script

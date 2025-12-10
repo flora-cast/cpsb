@@ -85,7 +85,7 @@ pub fn build(b: *std.Build) void {
     make.addImport("curl", dep_curl.module("curl"));
 
     const exe = b.addExecutable(.{
-        .name = "hburg",
+        .name = "cpsb",
         .linkage = .static,
         .root_module = b.createModule(.{ .root_source_file = b.path("src/main.zig"), .target = target, .optimize = optimize, .imports = &.{
             .{ .name = "constants", .module = constants },

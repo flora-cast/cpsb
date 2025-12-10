@@ -28,7 +28,7 @@ pub fn fetch_file(url: [:0]const u8, file: *std.fs.File) !void {
 
     try easy.setWritedata(&progress_data);
     easy.timeout_ms = 180000;
-    easy.user_agent = "hburg-builder/1.0";
+    easy.user_agent = "cpsb-builder/1.0";
 
     _ = try easy.perform();
     std.debug.print("\r\x1b[2K", .{});

@@ -28,14 +28,14 @@ pub fn main() !void {
         try build.build(allocator);
     } else if (eql(u8, args[1], "make")) {
         if (args.len < 3) {
-            std.debug.print("usage: hburg make <FILE>\n", .{});
+            std.debug.print("usage: cpsb make <FILE>\n", .{});
             std.process.exit(1);
         }
         try make_hb.make(allocator, args[2]);
     } else if (eql(u8, args[1], "help")) {
         display_help();
     } else if (eql(u8, args[1], "version")) {
-        std.debug.print("hburg version {s}\n", .{VERSION});
+        std.debug.print("cpsb version {s}\n", .{VERSION});
         std.debug.print("with zig {s}\n", .{ZIG_VERSION});
     } else {
         std.debug.print("Unknown command: {s}\n", .{args[1]});
