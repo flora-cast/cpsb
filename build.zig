@@ -14,6 +14,18 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    // for zstig
+    const dep_zstig = b.dependency("zstig", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
+    // for microtar-zig
+    const dep_microtar_zig = b.dependency("microtar_zig", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
     // ========== MODULES ===========
     const constants = b.addModule("constants", .{
         .root_source_file = b.path("src/constants.zig"),
@@ -83,6 +95,8 @@ pub fn build(b: *std.Build) void {
         },
     });
     make.addImport("curl", dep_curl.module("curl"));
+    make.addImport("zstig", dep_zstig.module("zstig"));
+    make.addImport("microtar_zig", dep_microtar_zig.module("microtar_zig"));
 
     const exe = b.addExecutable(.{
         .name = "cpsb",
@@ -102,6 +116,7 @@ pub fn build(b: *std.Build) void {
 
     // imports
     exe.root_module.addImport("curl", dep_curl.module("curl"));
+    exe.root_module.addImport("zstig", dep_zstig.module("zstig"));
 
     b.installArtifact(exe);
 

@@ -3,6 +3,9 @@ const std = @import("std");
 const make_index = @import("make_index");
 const package = @import("package");
 const fetch = @import("fetch");
+const zstig = @import("zstig");
+const tar_creation = @import("./tar_creation.zig");
+const tar = std.tar;
 
 pub fn make(allocator: std.mem.Allocator, file: []const u8) !void {
     const package_info = try make_index.create_package(allocator, file);
@@ -142,19 +145,15 @@ fn packaging(allocator: std.mem.Allocator, file: []const u8, package_info: packa
 
     const source_file = try std.fmt.allocPrint(allocator, "{s}/src-{s}-{s}", .{ source_dir, name, version });
     defer allocator.free(source_file);
-    defer deleteTreeAbsolute(source_file);
 
     const package_dir = try std.fmt.allocPrint(allocator, "/var/lib/cpsb/build/packaging-{s}/", .{name});
     defer allocator.free(package_dir);
-    defer deleteTreeAbsolute(package_dir);
 
     const build_dir = try std.fmt.allocPrint(allocator, "/var/lib/cpsb/build/build-{s}", .{name});
     defer allocator.free(build_dir);
-    defer deleteTreeAbsolute(build_dir);
 
     const temp_dir = try std.fmt.allocPrint(allocator, "/var/lib/cpsb/build/temp-{s}", .{name});
     defer allocator.free(temp_dir);
-    defer deleteTreeAbsolute(temp_dir);
 
     const build_file = try std.fs.realpathAlloc(allocator, file);
     defer allocator.free(build_file);
@@ -200,57 +199,36 @@ fn packaging(allocator: std.mem.Allocator, file: []const u8, package_info: packa
     const temp_tar_file = try std.fmt.allocPrint(allocator, "{s}/{s}.tar", .{ temp_dir, name });
     defer allocator.free(temp_tar_file);
 
+    // temp tar file
+    std.debug.print("\r\x1b[2Kcompressing: {s}\tcollect files", .{name});
+    try tar_creation.createTar(allocator, package_dir, temp_tar_file);
+
     {
-        // temp tar file
-        std.debug.print("\r\x1b[2Kcompressing: {s}\tcollect files", .{name});
-        const tar_cmd = try std.fmt.allocPrint(allocator, "cd {s} && tar -cf {s} .", .{ package_dir, temp_tar_file });
-        defer allocator.free(tar_cmd);
-
-        var child = std.process.Child.init(&.{
-            "/usr/bin/env",
-            "sh",
-            "-c",
-            tar_cmd,
-        }, allocator);
-        child.stderr_behavior = .Pipe;
-
-        const result = try child.spawnAndWait();
-
-        if (child.stderr) |err| {
-            const readed = try err.deprecatedReader().readAllAlloc(allocator, 4096);
-            defer allocator.free(readed);
-            std.debug.print("\x1b[s\x1b[1A\n{s}\n", .{readed});
-            std.debug.print("\x1b[u", .{});
-        }
-
-        if (result != .Exited or result.Exited != 0) {
-            return error.BuildFailed;
-        }
-    }
-    {
-        // create zstd file
         std.debug.print("\r\x1b[2Kcompressing: {s}\tcompressing to zstd", .{name});
-        const zstd_cmd = try std.fmt.allocPrint(allocator, "zstd -q -f {s} -o {s}", .{ temp_tar_file, realpath });
-        defer allocator.free(zstd_cmd);
 
-        var child = std.process.Child.init(&.{
-            "/usr/bin/env",
-            "sh",
-            "-c",
-            zstd_cmd,
-        }, allocator);
-        child.stderr_behavior = .Ignore;
-        child.stdin_behavior = .Ignore;
-        child.stdout_behavior = .Ignore;
+        const input_file = try std.fs.openFileAbsolute(temp_tar_file, .{});
+        defer input_file.close();
 
-        const result = try child.spawnAndWait();
+        const output_file = try std.fs.openFileAbsolute(realpath, .{ .mode = .read_write });
+        defer output_file.close();
 
-        if (result != .Exited or result.Exited != 0) {
-            return error.BuildFailed;
-        }
+        const content = try input_file.readToEndAlloc(allocator, std.math.maxInt(usize));
+        defer allocator.free(content);
+
+        const out = try zstig.compress(content, allocator);
+        defer allocator.free(out);
+
+        try output_file.writeAll(out);
     }
+
     std.debug.print("\r\x1b[2Kcompress: done\n", .{});
     std.debug.print("package created to: {s}\n", .{realpath});
+
+    // Clean up directories after tar creation is complete
+    deleteTreeAbsolute(source_file);
+    deleteTreeAbsolute(package_dir);
+    deleteTreeAbsolute(build_dir);
+    deleteTreeAbsolute(temp_dir);
 }
 
 fn fetch_source(alc: std.mem.Allocator, url: []const u8, save_file: []const u8) !void {
