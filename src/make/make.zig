@@ -48,7 +48,7 @@ fn install_dependencies(allocator: std.mem.Allocator, packages: *const [64][32]u
     var count: usize = 0;
 
     for (packages) |pkg| {
-        const name = std.mem.trim(u8, &pkg, &std.ascii.whitespace);
+        const name = std.mem.trim(u8, std.mem.sliceTo(&pkg, 0), &std.ascii.whitespace);
 
         if (name.len == 0) continue;
 
@@ -56,18 +56,23 @@ fn install_dependencies(allocator: std.mem.Allocator, packages: *const [64][32]u
         count += 1;
     }
 
+    if (count == 0) return;
+
     const packages_joined = try std.mem.join(allocator, " ", packages_slice[0..count]);
     defer allocator.free(packages_joined);
 
     std.debug.print("Installing dependencies...\n", .{});
     std.debug.print("Install packages: {s}\n", .{packages_joined});
 
-    var child = std.process.Child.init(&.{
-        "/sbin/apk",
-        "add",
-        "--no-cache",
-        packages_joined,
-    }, allocator);
+    var args = std.ArrayList([]const u8){};
+    defer args.deinit(allocator);
+
+    try args.append(allocator, "/sbin/apk");
+    try args.append(allocator, "add");
+    try args.append(allocator, "--no-cache");
+    try args.appendSlice(allocator, packages_slice[0..count]);
+
+    var child = std.process.Child.init(args.items, allocator);
 
     child.stdout_behavior = .Inherit;
     child.stderr_behavior = .Inherit;
