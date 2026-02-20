@@ -19,6 +19,9 @@ pub fn make(allocator: std.mem.Allocator, file: []const u8) !void {
                 std.process.exit(33);
             },
         };
+    } else {
+        std.debug.print("cpsb make supports only Alpine Linux.\nPlease running on docker or alpine linux\n", .{});
+        std.process.exit(1);
     }
 
     if (!exists("/etc/cpsb/build.sh")) {
@@ -302,15 +305,12 @@ fn check_linux_distribution(allocator: std.mem.Allocator) !Distribution {
     const readed = try os_releases.readToEndAlloc(allocator, std.math.maxInt(u32));
     defer allocator.free(readed);
 
-    std.debug.print("os-release: {s}\n", .{readed});
-
     var split = std.mem.splitAny(u8, readed, "=\n");
 
     var id: []const u8 = &.{};
     var wait_id = false;
 
     while (split.next()) |entry| {
-        std.debug.print("entry: {s}\n", .{entry});
         if (std.mem.eql(u8, entry, "ID")) {
             wait_id = true;
             continue;
