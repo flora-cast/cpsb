@@ -59,7 +59,7 @@ fn install_dependencies(allocator: std.mem.Allocator, packages: *const [64][32]u
     const packages_joined = try std.mem.join(allocator, " ", packages_slice[0..count]);
     defer allocator.free(packages_joined);
 
-    std.debug.print("Installing dependencies...", .{});
+    std.debug.print("Installing dependencies...\n", .{});
 
     var child = std.process.Child.init(&.{
         "/usr/bin/apk",
@@ -75,7 +75,7 @@ fn install_dependencies(allocator: std.mem.Allocator, packages: *const [64][32]u
     const result = try child.spawnAndWait();
 
     if (result != .Exited or result.Exited != 0) {
-        std.log.err("Failed to install packages\n", .{});
+        std.debug.print("Failed to install packages\n", .{});
         return error.InstallFailed;
     }
 }
@@ -296,12 +296,15 @@ fn check_linux_distribution(allocator: std.mem.Allocator) !Distribution {
     const readed = try os_releases.readToEndAlloc(allocator, std.math.maxInt(u32));
     defer allocator.free(readed);
 
+    std.debug.print("os-release: {s}\n", .{readed});
+
     var split = std.mem.splitAny(u8, readed, "=");
 
     var id: []const u8 = &.{};
     var wait_id = false;
 
     while (split.next()) |entry| {
+        std.debug.print("entry: {s}\n", .{entry});
         if (std.mem.eql(u8, entry, "ID")) {
             wait_id = true;
             continue;
