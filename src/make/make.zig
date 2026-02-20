@@ -13,6 +13,7 @@ pub fn make(allocator: std.mem.Allocator, file: []const u8) !void {
 
     if (try check_linux_distribution(allocator) == .alpine) {
         const build_depends = try make_index.get_value(allocator, file, "BUILD_DEPENDS");
+        defer allocator.free(build_depends);
         install_dependencies(allocator, build_depends) catch |err| switch (err) {
             error.InstallFailed => std.log.err("Failed to install packages", .{}),
             else => {
