@@ -12,7 +12,8 @@ pub fn make(allocator: std.mem.Allocator, file: []const u8) !void {
     defer allocator.destroy(package_info);
 
     if (try check_linux_distribution(allocator) == .alpine) {
-        install_dependencies(allocator, &package_info.depend) catch |err| switch (err) {
+        const build_depends = try make_index.get_value(allocator, file, "BUILD_DEPENDS");
+        install_dependencies(allocator, build_depends) catch |err| switch (err) {
             error.InstallFailed => std.log.err("Failed to install packages", .{}),
             else => {
                 std.debug.print("Unknown Error: {any}\n", .{err});
@@ -46,26 +47,9 @@ pub fn make(allocator: std.mem.Allocator, file: []const u8) !void {
     };
 }
 
-fn install_dependencies(allocator: std.mem.Allocator, packages: *const [64][32]u8) !void {
-    var packages_slice: [64][]const u8 = undefined;
-    var count: usize = 0;
-
-    for (packages) |*pkg| {
-        const name = std.mem.trim(u8, std.mem.sliceTo(pkg, 0), &std.ascii.whitespace);
-
-        if (name.len == 0) continue;
-
-        packages_slice[count] = name;
-        count += 1;
-    }
-
-    if (count == 0) return;
-
-    const packages_joined = try std.mem.join(allocator, " ", packages_slice[0..count]);
-    defer allocator.free(packages_joined);
-
+fn install_dependencies(allocator: std.mem.Allocator, packages: []const u8) !void {
     std.debug.print("Installing dependencies...\n", .{});
-    std.debug.print("Install packages: {s}\n", .{packages_joined});
+    std.debug.print("Install packages: {s}\n", .{packages});
 
     var args = std.ArrayList([]const u8){};
     defer args.deinit(allocator);
@@ -73,7 +57,7 @@ fn install_dependencies(allocator: std.mem.Allocator, packages: *const [64][32]u
     try args.append(allocator, "/sbin/apk");
     try args.append(allocator, "add");
     try args.append(allocator, "--no-cache");
-    try args.appendSlice(allocator, packages_slice[0..count]);
+    try args.append(allocator, packages);
 
     var child = std.process.Child.init(args.items, allocator);
 

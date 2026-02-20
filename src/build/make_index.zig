@@ -108,7 +108,7 @@ fn parse_depends(dest: *[64][32]u8, src: []const u8) !void {
     }
 }
 
-fn get_value(alc: std.mem.Allocator, file: []const u8, value: []const u8) ![]const u8 {
+pub fn get_value(alc: std.mem.Allocator, file: []const u8, value: []const u8) ![]const u8 {
     var arena = std.heap.ArenaAllocator.init(alc);
     defer arena.deinit();
 
