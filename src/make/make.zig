@@ -62,7 +62,7 @@ fn install_dependencies(allocator: std.mem.Allocator, packages: *const [64][32]u
     std.debug.print("Installing dependencies...\n", .{});
 
     var child = std.process.Child.init(&.{
-        "/usr/sbin/apk",
+        "/sbin/apk",
         "add",
         "--no-cache",
         packages_joined,
