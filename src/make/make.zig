@@ -48,7 +48,7 @@ fn install_dependencies(allocator: std.mem.Allocator, packages: *const [64][32]u
     var count: usize = 0;
 
     for (packages) |pkg| {
-        const name = std.mem.trim(u8, &pkg, std.ascii.whitespace);
+        const name = std.mem.trim(u8, &pkg, &std.ascii.whitespace);
 
         if (name.len == 0) continue;
 
