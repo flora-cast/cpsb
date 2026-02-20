@@ -48,7 +48,7 @@ fn install_dependencies(allocator: std.mem.Allocator, packages: *const [64][32]u
     var count: usize = 0;
 
     for (packages) |pkg| {
-        const name = std.mem.trim(u8, &pkg, " \n\r\t\x00");
+        const name = std.mem.trim(u8, &pkg, std.ascii.whitespace);
 
         if (name.len == 0) continue;
 
@@ -60,6 +60,7 @@ fn install_dependencies(allocator: std.mem.Allocator, packages: *const [64][32]u
     defer allocator.free(packages_joined);
 
     std.debug.print("Installing dependencies...\n", .{});
+    std.debug.print("Install packages: {s}\n", .{packages_joined});
 
     var child = std.process.Child.init(&.{
         "/sbin/apk",
