@@ -10,13 +10,16 @@ const tar = std.tar;
 pub fn make(allocator: std.mem.Allocator, file: []const u8) !void {
     const package_info = try make_index.create_package(allocator, file);
     defer allocator.destroy(package_info);
-    // install_dependencies(allocator, &package_info.depend) catch |err| switch (err) {
-    //     error.InstallFailed => std.log.err("Failed to install packages", .{}),
-    //     else => {
-    //         std.debug.print("Unknown Error: {any}\n", .{err});
-    //         std.process.exit(33);
-    //     },
-    // };
+
+    if (try check_linux_distribution(allocator) == .alpine) {
+        install_dependencies(allocator, &package_info.depend) catch |err| switch (err) {
+            error.InstallFailed => std.log.err("Failed to install packages", .{}),
+            else => {
+                std.debug.print("Unknown Error: {any}\n", .{err});
+                std.process.exit(33);
+            },
+        };
+    }
 
     if (!exists("/etc/cpsb/build.sh")) {
         _ = try makeDirAbsoluteRecursive(allocator, "/etc/cpsb/");
@@ -56,15 +59,18 @@ fn install_dependencies(allocator: std.mem.Allocator, packages: *const [64][32]u
     const packages_joined = try std.mem.join(allocator, " ", packages_slice[0..count]);
     defer allocator.free(packages_joined);
 
+    std.debug.print("Installing dependencies...", .{});
+
     var child = std.process.Child.init(&.{
-        "/usr/bin/cpsi",
-        "install",
+        "/usr/bin/apk",
+        "add",
+        "--no-cache",
         packages_joined,
     }, allocator);
 
-    child.stdout_behavior = .Ignore;
-    child.stderr_behavior = .Ignore;
-    child.stdin_behavior = .Ignore;
+    child.stdout_behavior = .Inherit;
+    child.stderr_behavior = .Inherit;
+    child.stdin_behavior = .Inherit;
 
     const result = try child.spawnAndWait();
 
@@ -134,7 +140,7 @@ fn build_package(allocator: std.mem.Allocator, hb_file: []const u8, package_info
         return error.BuildFailed;
     }
 
-    std.debug.print("build done\n", .{});
+    std.debug.print("build(): done\n", .{});
 }
 
 fn packaging(allocator: std.mem.Allocator, file: []const u8, package_info: package.Package) !void {
@@ -276,4 +282,42 @@ fn deleteTreeAbsolute(file: []const u8) void {
     std.fs.deleteTreeAbsolute(file) catch |err| {
         std.log.err("Failed to delete directory: {any}\n", .{err});
     };
+}
+
+const Distribution = enum {
+    alpine,
+    shary,
+    other,
+};
+
+fn check_linux_distribution(allocator: std.mem.Allocator) !Distribution {
+    const os_releases = try std.fs.openFileAbsolute("/etc/os-release", .{ .mode = .read_only });
+
+    const readed = try os_releases.readToEndAlloc(allocator, std.math.maxInt(u32));
+    defer allocator.free(readed);
+
+    var split = std.mem.splitAny(u8, readed, "=");
+
+    var id: []const u8 = &.{};
+    var wait_id = false;
+
+    while (split.next()) |entry| {
+        if (std.mem.eql(u8, entry, "ID")) {
+            wait_id = true;
+            continue;
+        }
+
+        if (wait_id) {
+            id = entry;
+            break;
+        }
+    }
+
+    if (std.mem.eql(u8, id, "alpine")) {
+        return .alpine;
+    } else if (std.mem.eql(u8, id, "shary")) {
+        return .shary;
+    } else {
+        return .other;
+    }
 }
