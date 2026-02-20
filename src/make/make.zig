@@ -51,13 +51,21 @@ fn install_dependencies(allocator: std.mem.Allocator, packages: []const u8) !voi
     std.debug.print("Installing dependencies...\n", .{});
     std.debug.print("Install packages: {s}\n", .{packages});
 
+    var packages_slice = std.mem.splitAny(u8, packages, " ");
+    var slice = std.ArrayList([]const u8){};
+    defer slice.deinit(allocator);
+
+    while (packages_slice.next()) |entry| {
+        try slice.append(allocator, entry);
+    }
+
     var args = std.ArrayList([]const u8){};
     defer args.deinit(allocator);
 
     try args.append(allocator, "/sbin/apk");
     try args.append(allocator, "add");
     try args.append(allocator, "--no-cache");
-    try args.append(allocator, packages);
+    try args.appendSlice(allocator, slice.items);
 
     var child = std.process.Child.init(args.items, allocator);
 
