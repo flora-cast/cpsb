@@ -47,8 +47,8 @@ fn install_dependencies(allocator: std.mem.Allocator, packages: *const [64][32]u
     var packages_slice: [64][]const u8 = undefined;
     var count: usize = 0;
 
-    for (packages) |pkg| {
-        const name = std.mem.trim(u8, std.mem.sliceTo(&pkg, 0), &std.ascii.whitespace);
+    for (packages) |*pkg| {
+        const name = std.mem.trim(u8, std.mem.sliceTo(pkg, 0), &std.ascii.whitespace);
 
         if (name.len == 0) continue;
 
@@ -322,9 +322,11 @@ fn check_linux_distribution(allocator: std.mem.Allocator) !Distribution {
         }
     }
 
-    if (std.mem.eql(u8, id, "alpine")) {
+    const clean_id = std.mem.trim(u8, id, " \t\r\n\"");
+
+    if (std.mem.eql(u8, clean_id, "alpine")) {
         return .alpine;
-    } else if (std.mem.eql(u8, id, "shary")) {
+    } else if (std.mem.eql(u8, clean_id, "shary")) {
         return .shary;
     } else {
         return .other;
