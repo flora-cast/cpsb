@@ -298,8 +298,7 @@ fn check_linux_distribution(allocator: std.mem.Allocator) !Distribution {
 
     std.debug.print("os-release: {s}\n", .{readed});
 
-    const trimed = std.mem.trim(u8, readed, "\n");
-    var split = std.mem.splitAny(u8, trimed, "=");
+    var split = std.mem.splitAny(u8, readed, "=\n");
 
     var id: []const u8 = &.{};
     var wait_id = false;
