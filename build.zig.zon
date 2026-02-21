@@ -41,8 +41,8 @@
             .hash = "zstig-0.1.1-dIJrnol0AgCbU4R2zDVsAprJr19YstjLIUcKHEV7avdD",
         },
         .microtar_zig = .{
-            .url = "https://github.com/flora-cast/microtar-zig/archive/refs/tags/0.1.0.zip",
-            .hash = "microtar_zig-0.0.0-vV9PoC5WAADmU9yGjtVcXNaqHrw_3YmOYXTRLYNWmucr",
+            .url = "https://github.com/flora-cast/microtar-zig/archive/refs/tags/0.1.1.zip",
+            .hash = "microtar_zig-0.0.0-vV9PoMdgAAAjQ1tlR8bGiprwywaGDHdW10p_SwciR_vx",
         },
     },
     .paths = .{
