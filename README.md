@@ -2,6 +2,20 @@
 
 Package builder for the cpsi Package Manager
 
+> [!IMPORTANT]
+> This repository contains an unfinished, experimental implementation of **cpsb** originally created for Shary OS.
+>
+> Development has moved to the new CPS Linux ecosystem:
+>
+> **https://github.com/CPS-Linux/cpsbuild**
+>
+> The new build system is not a continuation of this codebase. It is a complete rewrite with a different architecture, package format (`.clos`), recipe format (`.cpsb`), repository design, and packaging workflow.
+>
+> The legacy `*.hb` format documented in this repository is no longer part of the modern CPS Linux packaging ecosystem.
+>
+> This repository remains available solely for historical and educational purposes.
+
+
 ## Usage
 
 | Usage | Description |
